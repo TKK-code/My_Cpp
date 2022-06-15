@@ -1,0 +1,2 @@
+cout this message. this will work because the macro has been declared.
+The name is T Kiran

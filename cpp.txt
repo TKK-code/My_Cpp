@@ -1,0 +1,219 @@
+Machine Language
+================
+
+A computer’s CPU is incapable of speaking C++. The limited set of instructions that a CPU can understand directly is called machine code (or machine language or an instruction set).
+
+Here is a sample machine language instruction: 10110000 01100001
+
+Back when computers were first invented, programmers had to write programs directly in machine language, which was a very difficult and time consuming thing to do.
+
+How these instructions are organized is beyond the scope of this introduction, but it is interesting to note two things. First, each instruction is composed of a sequence of 1s and 0s. Each individual 0 or 1 is called a binary digit, or bit for short. The number of bits that make up a single command vary -- for example, some CPUs process instructions that are always 32 bits long, whereas some other CPUs (such as the x86 family, which you are likely using) have instructions that can be a variable length.
+
+Second, each set of binary digits is interpreted by the CPU into a command to do a very specific job, such as compare these two numbers, or put this number in that memory location. However, because different CPUs have different instruction sets, instructions that were written for one CPU type could not be used on a CPU that didn’t share the same instruction set. This meant programs generally weren’t portable (usable without major rework) to different types of system, and had to be written all over again.
+
+Assembly Language
+=================
+
+Because machine language is so hard for humans to read and understand, assembly language was invented. In an assembly language, each instruction is identified by a short abbreviation (rather than a set of bits), and names and other numbers can be used.
+
+Here is the same instruction as above in assembly language: mov al, 061h
+
+This makes assembly much easier to read and write than machine language. However, the CPU can not understand assembly language directly. Instead, the assembly program must be translated into machine language before it can be executed by the computer. This is done by using a program called an assembler. Programs written in assembly languages tend to be very fast, and assembly is still used today when speed is critical.
+
+However, assembly still has some downsides. First, assembly languages still require a lot of instructions to do even simple tasks. While the individual instructions themselves are somewhat human readable, understanding what an entire program is doing can be challenging (it’s a bit like trying to understand a sentence by looking at each letter individually). Second, assembly language still isn’t very portable -- a program written in assembly for one CPU will likely not work on hardware that uses a different instruction set, and would have to be rewritten or extensively modified.
+
+Function Parameters and Arguments
+=================================
+
+When a function is called, all of the parameters of the function are created as variables, and the value of each of the arguments is copied into the matching parameter. This process is called pass by value.
+
+
+Why use functions?
+* Organization
+* Reusability
+* Testing
+* Extensibility
+* Abstraction
+
+Function Prototype
+==================
+
+A forward declaration allows us to tell the compiler about the existence of an identifier before actually defining the identifier.
+
+Declarations vs. definitions
+
+In C++, you’ll frequently hear the words “declaration” and “definition” used, and often interchangeably. What do they mean? You now have enough fundamental knowledge to understand the difference between the two.
+
+A definition actually implements (for functions or types) or instantiates (for variables) the identifier. Here are some examples of definitions:
+
+int add(int x, int y) // implements function add()
+{
+    int z{ x + y }; // instantiates variable z
+
+    return z;
+}
+
+A definition is needed to satisfy the linker. If you use an identifier without providing a definition, the linker will error.
+
+The one definition rule (or ODR for short) is a well-known rule in C++. The ODR has three parts:
+
+Within a given file, a function, variable, type, or template can only have one definition.
+Within a given program, a variable or normal function can only have one definition. This distinction is made because programs can have more than one file (we’ll cover this in the next lesson).
+Types, templates, inline functions, and inline variables are allowed to have identical definitions in different files. We haven’t covered what most of these things are yet, so don’t worry about this for now -- we’ll bring it back up when it’s relevant.
+Violating part 1 of the ODR will cause the compiler to issue a redefinition error. Violating ODR part 2 will likely cause the linker to issue a redefinition error. Violating ODR part 3 will cause undefined behavior.
+
+
+Namespaces
+==========
+
+The :: symbol is an operator called the scope resolution operator. The identifier to the left of the :: symbol identifies the namespace that the name to the right of the :: symbol is contained within. If no identifier to the left of the :: symbol is provided, the global namespace is assumed.
+
+So when we say std::cout, we’re saying “the cout that lives in namespace std“.
+
+Conditional compilation
+=======================
+
+The conditional compilation preprocessor directives allow you to specify under what conditions something will or won’t compile. There are quite a few different conditional compilation directives, but we’ll only cover the three that are used by far the most here: #ifdef, #ifndef, and #endif.
+
+The #ifdef preprocessor directive allows the preprocessor to check whether an identifier has been previously #defined. If so, the code between the #ifdef and matching #endif is compiled. If not, the code is ignored.
+
+Consider the following program:
+
+#include <iostream>
+
+#define PRINT_JOE
+
+int main()
+{
+#ifdef PRINT_JOE
+    std::cout << "Joe\n"; // will be compiled since PRINT_JOE is defined
+#endif
+
+#ifdef PRINT_BOB
+    std::cout << "Bob\n"; // will be ignored since PRINT_BOB is not defined
+#endif
+
+    return 0;
+}
+Because PRINT_JOE has been #defined, the line std::cout << "Joe\n" will be compiled. Because PRINT_BOB has not been #defined, the line std::cout << "Bob\n" will be ignored.
+
+#ifndef is the opposite of #ifdef, in that it allows you to check whether an identifier has NOT been #defined yet.
+
+#include <iostream>
+
+int main()
+{
+#ifndef PRINT_BOB
+    std::cout << "Bob\n";
+#endif
+
+    return 0;
+}
+
+#if 0
+======
+One more common use of conditional compilation involves using #if 0 to exclude a block of code from being compiled (as if it were inside a comment block):
+
+Header file from another directory
+==================================
+
+Using g++, you can use the -I option to specify an alternate include directory.
+
+g++ -o main -I/source/includes main.cpp
+
+
+Why isn’t the size of the integer variables fixed?
+==================================================
+
+The short answer is that this goes back to C, when computers were slow and performance was of the utmost concern. C opted to intentionally leave the size of an integer open so that the compiler implementers could pick a size for int that performs best on the target computer architecture.
+
+	Doesn’t this suck?
+
+By modern standards, yes. As a programmer, it’s a little ridiculous to have to deal with types that have uncertain ranges.
+
+Consider the int type. The minimum size for int is 2 bytes, but it’s often 4 bytes on modern architectures. If you assume an int is 4 bytes because that’s most likely, then your program will probably misbehave on architectures where int is actually 2 bytes (since you will probably be storing values that require 4 bytes in a 2 byte variable, which will cause overflow or undefined behavior). If you assume an int is only 2 bytes to ensure maximum compatibility, then on systems where int is 4 bytes, you’re wasting 2 bytes per integer and doubling your memory usage!
+
+Fixed-width integers
+
+To address the above issues, C99 defined a set of fixed-width integers (in the stdint.h header) that are guaranteed to be the same size on any architecture.
+
+These are defined as follows:
+
+Name	Type	Range	Notes
+std::int8_t	1 byte signed	-128 to 127	Treated like a signed char on many systems. See note below.
+std::uint8_t	1 byte unsigned	0 to 255	Treated like an unsigned char on many systems. See note below.
+std::int16_t	2 byte signed	-32,768 to 32,767	
+std::uint16_t	2 byte unsigned	0 to 65,535	
+std::int32_t	4 byte signed	-2,147,483,648 to 2,147,483,647	
+std::uint32_t	4 byte unsigned	0 to 4,294,967,295	
+std::int64_t	8 byte signed	-9,223,372,036,854,775,808 to 9,223,372,036,854,775,807	
+std::uint64_t	8 byte unsigned	0 to 18,446,744,073,709,551,615	
+C++ officially adopted these fixed-width integers as part of C++11. They can be accessed by including the <cstdint> header, where they are defined inside the std namespace. Here’s an example:
+
+#include <cstdint> // for fixed-width integers
+#include <iostream>
+
+int main()
+{
+    std::int16_t i{5};
+    std::cout << i;
+    return 0;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+"""""
+"""""
+
+variable declaration =  int a;
+
+variable initilization = int a = 5; int a(5)
+
+Default initilization = int a; // compiler 
+
+Copy initilization =  int a = 5;
+
+Direct intilization = int a(5)
+
+Brace initilizaion = int a{5}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+""""
+""""
+
+==> Header Gaurd
